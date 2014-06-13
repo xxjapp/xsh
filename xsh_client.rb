@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-require "socket"
+require 'socket'
 
 class Client
   def initialize(server)
@@ -20,7 +20,7 @@ class Client
     Thread.new do
       loop {
         msg = @server.gets.chomp
-        puts msg
+        puts msg.force_encoding('UTF-8')
       }
     end
   end
@@ -29,6 +29,8 @@ class Client
     Thread.new do
       loop {
         msg = $stdin.gets.chomp
+        msg.encode!('UTF-8')
+
         @server.puts(msg)
       }
     end
