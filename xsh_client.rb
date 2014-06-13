@@ -6,20 +6,18 @@ require "socket"
 class Client
   def initialize(server)
     @server = server
-    @request = nil
-    @response = nil
   end
 
   def run()
-    listen
-    send
+    request_thread  = send()
+    response_thread = listen()
 
-    @request.join
-    @response.join
+    request_thread.join
+    response_thread.join
   end
 
   def listen
-    @response = Thread.new do
+    Thread.new do
       loop {
         msg = @server.gets.chomp
         puts msg
@@ -28,7 +26,7 @@ class Client
   end
 
   def send
-    @request = Thread.new do
+    Thread.new do
       loop {
         msg = $stdin.gets.chomp
         @server.puts(msg)
