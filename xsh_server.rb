@@ -4,34 +4,30 @@
 require "socket"
 
 class Server
-  def initialize( port, ip )
-    @server = TCPServer.open( ip, port )
-    run
+  def initialize(port, ip)
+    @server = TCPServer.open(ip, port)
   end
 
-  def run
+  def run()
     loop {
       Thread.start(@server.accept) do | client |
-        client.puts "username: "
-        username = client.gets.chomp
-
-        client.puts "password: "
-        password = client.gets.chomp
-
-        puts "#{username} #{password} #{client}"
-
         client.puts "Connection established!"
-        listen_user_messages( username, client )
+        process(client)
       end
     }.join
   end
 
-  def listen_user_messages( username, client )
+  def process(client)
     loop {
-      msg = client.gets.chomp
-      client.puts "#{username}: #{msg}"
+      request = client.gets.chomp
+      response = "#{request} OK"
+
+      puts request
+      puts response
+
+      client.puts response
     }
   end
 end
 
-Server.new( 3000, "localhost" )
+Server.new(3000, "localhost").run

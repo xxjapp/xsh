@@ -4,12 +4,16 @@
 require "socket"
 
 class Client
-  def initialize( server )
+  def initialize(server)
     @server = server
     @request = nil
     @response = nil
+  end
+
+  def run()
     listen
     send
+
     @request.join
     @response.join
   end
@@ -18,7 +22,7 @@ class Client
     @response = Thread.new do
       loop {
         msg = @server.gets.chomp
-        puts "#{msg}"
+        puts msg
       }
     end
   end
@@ -27,11 +31,11 @@ class Client
     @request = Thread.new do
       loop {
         msg = $stdin.gets.chomp
-        @server.puts( msg )
+        @server.puts(msg)
       }
     end
   end
 end
 
-server = TCPSocket.open( "localhost", 3000 )
-Client.new( server )
+server = TCPSocket.open("localhost", 3000)
+Client.new(server).run
