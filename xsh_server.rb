@@ -25,7 +25,7 @@ class Server
       puts request
 
       begin
-        response = `#{request}`.chomp
+        response = `#{request} 2>&1`.chomp
         response.encode!('UTF-8')
       rescue => e
         response = e

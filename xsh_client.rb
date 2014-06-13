@@ -29,6 +29,7 @@ class Client
     Thread.new do
       loop {
         msg = $stdin.gets.chomp
+        next if msg.empty?
         msg.encode!('UTF-8')
 
         @server.puts(msg)
