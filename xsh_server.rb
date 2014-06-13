@@ -26,11 +26,10 @@ class Server
 
       begin
         response = `#{request}`.chomp
+        response.encode!('UTF-8')
       rescue => e
         response = e
       end
-
-      response.encode!('UTF-8')
 
       puts response
 
