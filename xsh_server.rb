@@ -66,7 +66,7 @@ class Server
                     status = :ok
                 end
             rescue => e
-                send_line client, e.to_s
+                send_line client, e.to_s.force_encoding(Encoding.default_external)
                 status = :error
             ensure
                 # send response end
