@@ -2,6 +2,7 @@
 # encoding: UTF-8
 
 require 'socket'
+require 'digest/md5'
 
 class Client
     def initialize(server)
@@ -9,25 +10,25 @@ class Client
     end
 
     def run()
-        msg = @server.gets.chomp
-        puts msg.force_encoding('UTF-8')
+        greetings = @server.gets.chomp
+        puts greetings.force_encoding('UTF-8')
 
         process_thread = Thread.new do
             loop {
                 print "[#{Time.now.strftime('%F %T')}] # "
-                msg = $stdin.gets.chomp
-                next if msg.empty?
+                request = $stdin.gets.chomp
+                next if request.empty?
 
-                msg.encode!('UTF-8')
-                req_id = Random.rand.to_s
+                request.encode!('UTF-8')
+                req_id = Digest::MD5.hexdigest(Random.rand.to_s)[0..7]
 
                 @server.puts(req_id)
-                @server.puts(msg)
+                @server.puts(request)
 
                 loop {
-                    msg = @server.gets.chomp
-                    break if msg == req_id
-                    puts msg.force_encoding('UTF-8')
+                    response = @server.gets.chomp
+                    break if response == req_id
+                    puts response.force_encoding('UTF-8')
                 }
             }
         end
