@@ -46,7 +46,13 @@ class Client
             }
         end
 
-        process_thread.join
+        begin
+            process_thread.join
+        rescue Interrupt => e
+            puts
+        ensure
+            puts "Connection to #{HOST} closed."
+        end
     end
 
 private
