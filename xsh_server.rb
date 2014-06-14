@@ -25,7 +25,9 @@ class Server
       request.force_encoding('UTF-8').encode!(Encoding.default_external)
 
       # log request
-      puts request
+      puts "/------------------------------- #{client}"
+      puts "request : #{request}"
+      puts "--------------------------------"
 
       # handle response
       begin
@@ -36,12 +38,15 @@ class Server
 
       response.encode!('UTF-8')
 
-      # log response
-      puts response
-      puts status
-
       # send response
       client.puts response
+
+      # log response
+      puts response
+
+      puts "--------------------------------"
+      puts "status  : #{status}"
+      puts "\\------------------------------- #{client}"
     }
   end
 end
