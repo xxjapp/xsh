@@ -31,16 +31,23 @@ class Server
 
             # log request
             puts "/--------------------------------------------------------------"
+            puts "client  : #{client}"
             puts "req_id  : #{req_id}"
             puts "request : #{request}"
             puts "--------------------------------"
 
-            status = nil
+            cmd     = request.encode(Encoding.default_external)
+            options = parse(cmd)
+            status  = :unknown
 
             # handle response
             begin
-                cmd     = request.encode(Encoding.default_external)
-                options = parse(cmd)
+                # exit?
+                if options[:exit]
+                    send_line(client, req_id, cmd: :exit, log: false)
+                    status = :exit
+                    return
+                end
 
                 if !options[:no_output]
                     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
@@ -58,14 +65,14 @@ class Server
                 end
             rescue => e
                 send_line client, e.to_s
+            ensure
+                # send response end
+                send_line(client, req_id, log: false) if status != :exit
+
+                puts "--------------------------------"
+                puts "status  : #{status}"
+                puts "\\--------------------------------------------------------------"
             end
-
-            # send response end
-            send_line(client, req_id, log: false)
-
-            puts "--------------------------------"
-            puts "status  : #{status}"
-            puts "\\--------------------------------------------------------------"
         }
     end
 
@@ -77,7 +84,8 @@ private
     end
 
     def send_line(client, line, options = {})
-        encoded = line.encode('UTF-8')
+        encoded  = line.encode('UTF-8')
+        encoded += ":#{options[:cmd]}" if options[:cmd]
 
         client.puts encoded
         puts encoded if options[:log] != false
@@ -91,6 +99,8 @@ private
         when :start
             options[:no_output] = true
             options[:cmd]       = cmd.split[1..-1].join(' ')
+        when :exit
+            options[:exit]      = true
         end
 
         return options

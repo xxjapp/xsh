@@ -29,7 +29,18 @@ class Client
 
                 loop {
                     response = get_line()
-                    break if response == req_id
+
+                    if response.start_with? req_id
+                        cmd = response.split(':')[1]
+
+                        case cmd
+                        when 'exit'
+                            Thread.exit
+                        else
+                            break
+                        end
+                    end
+
                     puts response
                 }
             }
