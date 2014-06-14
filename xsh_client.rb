@@ -60,7 +60,7 @@ private
     end
 
     def get_request()
-        line = Readline.readline("[#{Time.now.strftime('%F %T')} #{@dir}] # ", true)
+        line = Readline.readline("[#{Time.now.strftime('%F %T')} #{@sdir}] # ", true)
         return nil if line.nil?
 
         # restore lines from Readline to its correct encoding 'Encoding.default_external'
@@ -141,9 +141,8 @@ private
         case key.to_sym
         when :exit
             Thread.exit
-        when :pwd
-            @pwd = value
-            @dir = File.basename @pwd
+        when :sdir
+            @sdir = value
         else
             puts "#{key} not supported yet"
         end

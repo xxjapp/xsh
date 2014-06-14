@@ -8,6 +8,7 @@ require 'awesome_print'
 # SEE: https://github.com/gimite/web-socket-ruby/issues/6
 HOST = '0.0.0.0'
 PORT = '3000'
+HOME = File.expand_path('~')
 
 class Server
     def initialize(host, port)
@@ -55,10 +56,15 @@ class Server
                 end
 
                 if params[:cd]
-                    Dir.chdir File.expand_path(params[:path])
+                    dir = File.expand_path(params[:path])
+                    Dir.chdir dir
 
-                    # send pwd info
-                    send_info(params, :pwd, params[:path])
+                    # send short dir info
+                    send_info(params, :sdir, short_dir(dir))
+
+                    # send file list info
+                    # send_info(params, :ls, `ls`)
+
                     status = :ok
                 elsif !params[:no_output]
                     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
@@ -101,6 +107,11 @@ class Server
     end
 
 private
+
+    def short_dir(dir)
+        return '~' if dir == HOME
+        return dir.split('/')[-1]
+    end
 
     def get_line(client)
         line = client.gets.chomp
