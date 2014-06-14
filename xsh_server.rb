@@ -36,20 +36,21 @@ class Server
             puts "request : #{request}"
             puts "--------------------------------"
 
-            cmd     = request.encode(Encoding.default_external)
-            options = parse(cmd)
-            status  = :unknown
+            cmd    = request.encode(Encoding.default_external)
+            params = parse(cmd)
+            status = :unknown
 
             # handle response
             begin
                 # exit?
-                if options[:exit]
-                    send_line(client, req_id, cmd: :exit, log: false)
+                if params[:exit]
+                    # send response end with cmd
+                    send_line(client, req_id, log: false, cmd: :exit)
                     status = :exit
                     return
                 end
 
-                if !options[:no_output]
+                if !params[:no_output]
                     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
                         # stdin not supported
                         stdin.close
@@ -60,7 +61,7 @@ class Server
                         status = wait_thr.value
                     end
                 else
-                    cmd = options[:cmd]
+                    cmd = params[:cmd]
                     Open3.popen3(cmd)
                 end
             rescue => e
@@ -92,18 +93,18 @@ private
     end
 
     def parse(cmd)
-        options = {}
-        exe     = File.basename(cmd.split[0], ".*").downcase.to_sym
+        params = {}
+        exe    = File.basename(cmd.split[0], ".*").downcase.to_sym
 
         case exe
         when :start
-            options[:no_output] = true
-            options[:cmd]       = cmd.split[1..-1].join(' ')
+            params[:no_output] = true
+            params[:cmd]       = cmd.split[1..-1].join(' ')
         when :exit
-            options[:exit]      = true
+            params[:exit]      = true
         end
 
-        return options
+        return params
     end
 end
 
