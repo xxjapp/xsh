@@ -4,9 +4,13 @@
 require 'socket'
 require 'open3'
 
+# SEE: https://github.com/gimite/web-socket-ruby/issues/6
+HOST = '0.0.0.0'
+PORT = '3000'
+
 class Server
-    def initialize(port, ip)
-        @server = TCPServer.open(ip, port)
+    def initialize(host, port)
+        @server = TCPServer.open(host, port)
     end
 
     def run()
@@ -72,4 +76,4 @@ private
     end
 end
 
-Server.new(3000, "localhost").run
+Server.new(HOST, PORT).run

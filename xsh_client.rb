@@ -4,6 +4,9 @@
 require 'socket'
 require 'digest/md5'
 
+HOST = 'localhost'
+PORT = '3000'
+
 class Client
     def initialize(server)
         @server = server
@@ -50,5 +53,5 @@ private
     end
 end
 
-server = TCPSocket.open("localhost", 3000)
+server = TCPSocket.open(HOST, PORT)
 Client.new(server).run
