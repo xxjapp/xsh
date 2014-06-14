@@ -42,16 +42,19 @@ class Server
                 cmd     = request.encode(Encoding.default_external)
                 options = parse(cmd)
 
-                Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
-                    # stdin not supported
-                    stdin.close
+                if !options[:no_output]
+                    Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
+                        # stdin not supported
+                        stdin.close
 
-                    if !options[:no_output]
                         stdout.each_line { |line| send_line(client, line) }
                         stderr.each_line { |line| send_line(client, line) }
-                    end
 
-                    status = wait_thr.value
+                        status = wait_thr.value
+                    end
+                else
+                    cmd = options[:cmd]
+                    Open3.popen3(cmd)
                 end
             rescue => e
                 send_line client, e.to_s
@@ -87,6 +90,7 @@ private
         case exe
         when :start
             options[:no_output] = true
+            options[:cmd]       = cmd.split[1..-1].join(' ')
         end
 
         return options
