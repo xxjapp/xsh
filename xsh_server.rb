@@ -63,9 +63,11 @@ class Server
                 else
                     cmd = params[:cmd]
                     Open3.popen3(cmd)
+                    status = :ok
                 end
             rescue => e
                 send_line client, e.to_s
+                status = :error
             ensure
                 # send response end
                 send_line(client, req_id, log: false) if status != :exit
