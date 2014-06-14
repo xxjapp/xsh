@@ -10,8 +10,8 @@ class Client
     end
 
     def run()
-        greetings = @server.gets.chomp
-        puts greetings.force_encoding('UTF-8')
+        greetings = get_line()
+        puts greetings
 
         process_thread = Thread.new do
             loop {
@@ -19,21 +19,34 @@ class Client
                 request = $stdin.gets.chomp
                 next if request.empty?
 
-                request.encode!('UTF-8')
                 req_id = Digest::MD5.hexdigest(Random.rand.to_s)[0..7]
 
-                @server.puts(req_id)
-                @server.puts(request)
+                send_line req_id
+                send_line request
 
                 loop {
-                    response = @server.gets.chomp
+                    response = get_line()
                     break if response == req_id
-                    puts response.force_encoding('UTF-8')
+                    puts response
                 }
             }
         end
 
         process_thread.join
+    end
+
+private
+
+    def get_line()
+        line = @server.gets.chomp
+        line.force_encoding('UTF-8')
+    end
+
+    def send_line(line)
+        encoded = line.encode('UTF-8')
+
+        @server.puts encoded
+        # puts encoded
     end
 end
 
