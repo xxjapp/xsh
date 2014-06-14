@@ -8,7 +8,9 @@ require 'awesome_print'
 # SEE: https://github.com/gimite/web-socket-ruby/issues/6
 HOST = '0.0.0.0'
 PORT = '3000'
+
 HOME = File.expand_path('~')
+INIT = "init-init"
 
 class Server
     def initialize(host, port)
@@ -20,7 +22,7 @@ class Server
         loop {
             Thread.start(@server.accept) do | client |
                 send_line(client, "#{client}: Connection established!")
-                process(client, 'init', 'cd ~')
+                process(client, INIT, 'cd ~')
             end
         }.join
     end
@@ -63,7 +65,7 @@ class Server
                     send_info(params, :sdir, short_dir(dir))
 
                     # send file list info
-                    # send_info(params, :ls, `ls`)
+                    send_info(params, :ls, `ls`.split("\n").join(req_id))
 
                     status = :ok
                 elsif !params[:no_output]

@@ -8,12 +8,19 @@ require 'readline'
 HOST = 'localhost'
 PORT = '3000'
 
+INIT        = "init-init" # TODO
 XSH_HISTORY = File.expand_path('~/.xsh_history')
 
 class Client
+    @@files = []
+
     def initialize(server)
         @server = server
         init_history()
+    end
+
+    def self.files
+        @@files
     end
 
     def run()
@@ -21,7 +28,7 @@ class Client
         puts greetings
 
         # handle init response
-        handle_response('init')
+        handle_response(INIT)
 
         process_thread = Thread.new do
             loop {
@@ -129,7 +136,7 @@ private
                     response_status = :end
                 else
                     info = response.split(':', 2)
-                    handle_info info[0], info[1]
+                    handle_info info[0], info[1], req_id
                 end
             when :end
                 break
@@ -137,17 +144,26 @@ private
         }
     end
 
-    def handle_info(key, value)
+    def handle_info(key, value, req_id)
         case key.to_sym
         when :exit
             Thread.exit
         when :sdir
             @sdir = value
+        when :ls
+            handle_ls value.split(req_id)
         else
             puts "#{key} not supported yet"
         end
     end
+
+    def handle_ls(files)
+        @@files = files.sort
+    end
 end
+
+Readline.completion_append_character = ' '
+Readline.completion_proc = proc { |s| Client.files.grep( /^#{Regexp.escape(s)}/ ) }
 
 server = TCPSocket.open(HOST, PORT)
 Client.new(server).run
