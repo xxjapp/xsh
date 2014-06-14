@@ -8,9 +8,12 @@ require 'readline'
 HOST = 'localhost'
 PORT = '3000'
 
+XSH_HISTORY = File.expand_path('~/.xsh_history')
+
 class Client
     def initialize(server)
         @server = server
+        init_history()
     end
 
     def run()
@@ -57,15 +60,31 @@ class Client
 
 private
 
+    def init_history()
+        IO.foreach(XSH_HISTORY, encoding: 'UTF-8') do |line|
+            # Readline uses strings of Encoding.default_external but must pretend to be of 'ASCII-8BIT'
+            line = line.chomp.encode(Encoding.default_external).force_encoding('ASCII-8BIT')
+            Readline::HISTORY.push(line)
+        end
+    rescue Errno::ENOENT => e
+        # No such file or directory: OK
+    end
+
     def get_request()
         line = Readline.readline("[#{Time.now.strftime('%F %T')}] # ", true)
         return nil if line.nil?
 
-        if line =~ /^\s*$/ or Readline::HISTORY.to_a[-2] == line
+        # restore lines from Readline to its correct encoding 'Encoding.default_external'
+        corrent_line = line.clone.force_encoding(Encoding.default_external)
+
+        if corrent_line =~ /^\s*$/ or Readline::HISTORY.to_a[-2] == line
             Readline::HISTORY.pop
+        else
+            # write to histroy
+            File.open(XSH_HISTORY, 'a', encoding: 'UTF-8') { |file| file.puts corrent_line }
         end
 
-        line
+        corrent_line
     end
 
     def get_line()
