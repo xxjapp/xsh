@@ -20,6 +20,9 @@ class Client
         greetings = get_line()
         puts greetings
 
+        # handle init response
+        handle_response('init')
+
         process_thread = Thread.new do
             loop {
                 request = get_request()
@@ -31,22 +34,7 @@ class Client
                 send_line req_id
                 send_line request
 
-                loop {
-                    response = get_line()
-
-                    if response.start_with? req_id
-                        cmd = response.split(':')[1]
-
-                        case cmd
-                        when 'exit'
-                            Thread.exit
-                        else
-                            break
-                        end
-                    end
-
-                    puts response
-                }
+                handle_response(req_id)
             }
         end
 
@@ -72,7 +60,7 @@ private
     end
 
     def get_request()
-        line = Readline.readline("[#{Time.now.strftime('%F %T')}] # ", true)
+        line = Readline.readline("[#{Time.now.strftime('%F %T')} #{@dir}] # ", true)
         return nil if line.nil?
 
         # restore lines from Readline to its correct encoding 'Encoding.default_external'
@@ -117,6 +105,48 @@ private
         Readline::HISTORY.each { |cmd|
             printf " %#{w}d %s\n", i += 1, cmd.force_encoding(Encoding.default_external)
         }
+    end
+
+    def handle_response(req_id)
+        response_status = :ready
+
+        loop {
+            response = get_line() if response_status != :end
+
+            case response_status
+            when :ready
+                case response
+                when "#{req_id}:info"
+                    response_status = :info
+                when req_id
+                    response_status = :end
+                else
+                    puts response
+                end
+            when :info
+                case response
+                when req_id
+                    response_status = :end
+                else
+                    info = response.split(':', 2)
+                    handle_info info[0], info[1]
+                end
+            when :end
+                break
+            end
+        }
+    end
+
+    def handle_info(key, value)
+        case key.to_sym
+        when :exit
+            Thread.exit
+        when :pwd
+            @pwd = value
+            @dir = File.basename @pwd
+        else
+            puts "#{key} not supported yet"
+        end
     end
 end
 

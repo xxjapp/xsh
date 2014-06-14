@@ -3,6 +3,7 @@
 
 require 'socket'
 require 'open3'
+require 'awesome_print'
 
 # SEE: https://github.com/gimite/web-socket-ruby/issues/6
 HOST = '0.0.0.0'
@@ -18,42 +19,53 @@ class Server
         loop {
             Thread.start(@server.accept) do | client |
                 send_line(client, "#{client}: Connection established!")
-                process(client)
+                process(client, 'init', 'cd ~')
             end
         }.join
     end
 
-    def process(client)
+    def process(client, req_id, request)
         loop {
             # handle request
-            req_id  = get_line(client)
-            request = get_line(client)
+            req_id  ||= get_line(client)
+            request ||= get_line(client)
 
             # log request
             puts "/--------------------------------------------------------------"
             puts "client  : #{client}"
             puts "req_id  : #{req_id}"
             puts "request : #{request}"
-            puts "--------------------------------"
 
             cmd    = request.encode(Encoding.default_external)
             params = parse(cmd)
             status = :unknown
 
+            # save req_id & client
+            params[:req_id] = req_id
+            params[:client] = client
+
             # handle response
             begin
                 # exit?
                 if params[:exit]
-                    # send response end with cmd
-                    send_line(client, req_id, log: false, cmd: :exit)
+                    # send cmd info
+                    send_info(params, :exit, :yes)
                     status = :exit
                     return
                 end
 
-                if !params[:no_output]
+                if params[:cd]
+                    Dir.chdir File.expand_path(params[:path])
+
+                    # send pwd info
+                    send_info(params, :pwd, params[:path])
+                    status = :ok
+                elsif !params[:no_output]
                     Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
                         # stdin not supported
                         stdin.close
+
+                        puts "--------------------------------"
 
                         stdout.each_line { |line| send_line(client, line) }
                         stderr.each_line { |line| send_line(client, line) }
@@ -69,14 +81,23 @@ class Server
                 send_line client, e.to_s.force_encoding(Encoding.default_external)
                 status = :error
             ensure
-                # send response end
-                send_line(client, req_id, log: false) if status != :exit
+                # close response send
+                close_send(params)
 
                 puts "--------------------------------"
                 puts "status  : #{status}"
                 puts "\\--------------------------------------------------------------"
+
+                # clear status
+                req_id  = nil
+                request = nil
             end
         }
+    rescue => e
+        puts "Error during processing: #{$!}"
+        puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+
+        raise e
     end
 
 private
@@ -86,12 +107,28 @@ private
         line.force_encoding('UTF-8')
     end
 
-    def send_line(client, line, options = {})
-        encoded  = line.encode('UTF-8')
-        encoded += ":#{options[:cmd]}" if options[:cmd]
-
+    def send_line(client, line)
+        encoded = line.encode('UTF-8')
         client.puts encoded
-        puts encoded if options[:log] != false
+        puts encoded
+    end
+
+    def send_info(params, key, value)
+        if !params[:info]
+            params[:info] = true
+            puts "--------------------------------"
+
+            send_line params[:client], "#{params[:req_id]}:info"
+        end
+
+        send_line params[:client], "#{key.to_s}:#{value.to_s}"
+    end
+
+    def close_send(params)
+        return if params[:closed]
+        params[:closed] = true
+
+        send_line params[:client], params[:req_id]
     end
 
     def parse(cmd)
@@ -104,7 +141,14 @@ private
             params[:cmd]       = cmd.split[1..-1].join(' ')
         when :exit
             params[:exit]      = true
+        when :cd
+            params[:cd]        = true
+            params[:path]      = cmd.split[1..-1].join(' ')
+            params[:path]      = '~' if params[:path].empty?    # use linux way
         end
+
+        print 'params  = '
+        ap params
 
         return params
     end
