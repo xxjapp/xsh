@@ -19,20 +19,24 @@ class Server
 
   def process(client)
     loop {
+      # handle request
       request = client.gets.chomp
       request.force_encoding('UTF-8').encode!(Encoding.default_external)
 
+      # log request
       puts request
 
+      # handle response
       begin
         response = `#{request} 2>&1`.chomp
-        response.encode!('UTF-8')
       rescue => e
-        response = e
+        response = e.to_s
       end
 
-      puts response
+      response.encode!('UTF-8')
 
+      # log and send response
+      puts response
       client.puts response
     }
   end
