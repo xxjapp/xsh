@@ -2,6 +2,7 @@
 # encoding: UTF-8
 
 require 'socket'
+require 'open3'
 
 class Server
   def initialize(port, ip)
@@ -28,15 +29,18 @@ class Server
 
       # handle response
       begin
-        response = `#{request} 2>&1`.chomp
+        response, status = Open3.capture2e("#{request} 2>&1")
       rescue => e
         response = e.to_s
       end
 
       response.encode!('UTF-8')
 
-      # log and send response
+      # log response
       puts response
+      puts status
+
+      # send response
       client.puts response
     }
   end
