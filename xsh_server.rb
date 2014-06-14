@@ -11,6 +11,7 @@ PORT = '3000'
 class Server
     def initialize(host, port)
         @server = TCPServer.open(host, port)
+        puts "#{@server} started OK!"
     end
 
     def run()
@@ -38,13 +39,17 @@ class Server
 
             # handle response
             begin
-                cmd = request.encode(Encoding.default_external)
+                cmd     = request.encode(Encoding.default_external)
+                options = parse(cmd)
 
                 Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
+                    # stdin not supported
                     stdin.close
 
-                    stdout.each_line { |line| send_line(client, line) }
-                    stderr.each_line { |line| send_line(client, line) }
+                    if !options[:no_output]
+                        stdout.each_line { |line| send_line(client, line) }
+                        stderr.each_line { |line| send_line(client, line) }
+                    end
 
                     status = wait_thr.value
                 end
@@ -73,6 +78,18 @@ private
 
         client.puts encoded
         puts encoded if options[:log] != false
+    end
+
+    def parse(cmd)
+        options = {}
+        exe     = File.basename(cmd.split[0], ".*").downcase.to_sym
+
+        case exe
+        when :start
+            options[:no_output] = true
+        end
+
+        return options
     end
 end
 
