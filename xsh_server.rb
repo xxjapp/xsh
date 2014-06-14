@@ -12,6 +12,7 @@ class Server
   def run()
     loop {
       Thread.start(@server.accept) do | client |
+        puts "#{client} connected"
         client.puts "Connection established!"
         process(client)
       end
@@ -21,11 +22,14 @@ class Server
   def process(client)
     loop {
       # handle request
+      req_id  = client.gets.chomp
       request = client.gets.chomp
+
       request.force_encoding('UTF-8').encode!(Encoding.default_external)
 
       # log request
-      puts "/------------------------------- #{client}"
+      puts "/--------------------------------------------------------------"
+      puts "req_id  : #{req_id}"
       puts "request : #{request}"
       puts "--------------------------------"
 
@@ -40,13 +44,14 @@ class Server
 
       # send response
       client.puts response
+      client.puts req_id    # used as end of response
 
       # log response
       puts response
 
       puts "--------------------------------"
       puts "status  : #{status}"
-      puts "\\------------------------------- #{client}"
+      puts "\\--------------------------------------------------------------"
     }
   end
 end
