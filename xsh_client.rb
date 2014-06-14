@@ -24,6 +24,7 @@ class Client
             loop {
                 request = get_request()
                 next if request.empty?
+                next if handle_local_request? request
 
                 req_id = Digest::MD5.hexdigest(Random.rand.to_s)[0..7]
 
@@ -97,6 +98,25 @@ private
 
         @server.puts encoded
         # puts encoded
+    end
+
+    def handle_local_request?(request)
+        case request.downcase.to_sym
+        when :history
+            dump_history()
+            return true
+        else
+            return false
+        end
+    end
+
+    def dump_history()
+        w = Readline::HISTORY.size.to_s.size
+        i = 0
+
+        Readline::HISTORY.each { |cmd|
+            printf " %#{w}d %s\n", i += 1, cmd.force_encoding(Encoding.default_external)
+        }
     end
 end
 
