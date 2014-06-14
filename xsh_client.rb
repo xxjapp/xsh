@@ -3,6 +3,7 @@
 
 require 'socket'
 require 'digest/md5'
+require 'readline'
 
 HOST = 'localhost'
 PORT = '3000'
@@ -18,8 +19,7 @@ class Client
 
         process_thread = Thread.new do
             loop {
-                print "[#{Time.now.strftime('%F %T')}] # "
-                request = $stdin.gets.chomp
+                request = get_request()
                 next if request.empty?
 
                 req_id = Digest::MD5.hexdigest(Random.rand.to_s)[0..7]
@@ -56,6 +56,17 @@ class Client
     end
 
 private
+
+    def get_request()
+        line = Readline.readline("[#{Time.now.strftime('%F %T')}] # ", true)
+        return nil if line.nil?
+
+        if line =~ /^\s*$/ or Readline::HISTORY.to_a[-2] == line
+            Readline::HISTORY.pop
+        end
+
+        line
+    end
 
     def get_line()
         line = @server.gets.chomp
