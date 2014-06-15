@@ -11,6 +11,13 @@ PORT = '3000'
 XSH_HISTORY = File.expand_path('~/.xsh_history')
 INIT        = "init"
 
+BASIC_COMMANDS = [
+    'cd',
+    'exit',
+    'history',
+    'start',
+]
+
 class Client
     @@files = []
 
@@ -166,7 +173,11 @@ private
 end
 
 Readline.completion_append_character = ' '
-Readline.completion_proc = proc { |s| Client.files.grep( /^#{Regexp.escape(s)}/ ) }
+Readline.completion_proc = proc do |s|
+    list = Readline.line_buffer.lstrip.include?(' ') ? Client.files : BASIC_COMMANDS
+
+    list.grep /^#{Regexp.escape(s)}/
+end
 
 server = TCPSocket.open(HOST, PORT)
 Client.new(server).run
