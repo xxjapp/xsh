@@ -4,6 +4,7 @@
 require 'socket'
 require 'open3'
 require 'awesome_print'
+require './compgen'
 
 # SEE: https://github.com/gimite/web-socket-ruby/issues/6
 HOST = '0.0.0.0'
@@ -76,6 +77,7 @@ class Server
                         Dir.chdir dir
 
                         send_info(params, :sdir, short_dir(dir))
+                        send_info(params, :exes, get_exes()) if req_id == INIT
 
                         session[:curr_dir] = dir
                         session[:prev_dir] = curr_dir
@@ -204,6 +206,10 @@ private
 
     def get_file_list_info()
         Dir["*"].join("\0")
+    end
+
+    def get_exes()
+        CompGen.get.join("\0")
     end
 end
 

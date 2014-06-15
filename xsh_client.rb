@@ -20,6 +20,7 @@ BASIC_COMMANDS = [
 
 class Client
     @@files = []
+    @@exes  = []
 
     def initialize(server)
         @server = server
@@ -28,6 +29,10 @@ class Client
 
     def self.files
         @@files
+    end
+
+    def self.exes
+        @@exes
     end
 
     def run()
@@ -164,6 +169,8 @@ private
             @sdir = value
         when :ls
             handle_ls value.split("\0")
+        when :exes
+            handle_exes value.split("\0")
         else
             puts "#{key} not supported yet"
         end
@@ -172,12 +179,15 @@ private
     def handle_ls(files)
         @@files = files.sort
     end
+
+    def handle_exes(exes)
+        @@exes = (BASIC_COMMANDS + exes).uniq.sort
+    end
 end
 
 Readline.completion_append_character = ' '
 Readline.completion_proc = proc do |s|
-    list = Readline.line_buffer.lstrip.include?(' ') ? Client.files : BASIC_COMMANDS
-
+    list = Readline.line_buffer.lstrip.include?(' ') ? Client.files : Client.exes
     list.grep /^#{Regexp.escape(s)}/
 end
 
