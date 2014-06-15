@@ -181,7 +181,7 @@ private
     end
 
     def handle_exes(exes)
-        @@exes = (BASIC_COMMANDS + exes).uniq.sort
+        @@exes = (BASIC_COMMANDS + exes).sort.uniq
     end
 end
 

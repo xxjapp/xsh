@@ -17,7 +17,7 @@ module CompGen
             end
         end
 
-        exes.sort
+        exes.sort.uniq
     end
 end
 
