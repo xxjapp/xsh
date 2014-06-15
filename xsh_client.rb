@@ -42,6 +42,8 @@ class Client
                 send_line request
 
                 handle_response(req_id)
+
+                Thread.exit if @exit
             }
         end
 
@@ -147,7 +149,8 @@ private
     def handle_info(key, value)
         case key.to_sym
         when :exit
-            Thread.exit
+            @exit = true
+            # puts caller.join("\n\t")
         when :sdir
             @sdir = value
         when :ls
