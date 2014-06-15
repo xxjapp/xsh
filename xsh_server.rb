@@ -10,7 +10,7 @@ HOST = '0.0.0.0'
 PORT = '3000'
 
 HOME = File.expand_path('~')
-INIT = "init-init"
+INIT = "init"
 
 class Server
     def initialize(host, port)
@@ -65,7 +65,7 @@ class Server
                     send_info(params, :sdir, short_dir(dir))
 
                     # send file list info
-                    send_info(params, :ls, `ls`.split("\n").join(req_id))
+                    send_info(params, :ls, `ls`.split("\n").join("\0"))
 
                     status = :ok
                 elsif !params[:no_output]
