@@ -28,6 +28,8 @@ class Server
     end
 
     def process(client, req_id, request)
+        session = {}
+
         loop {
             # handle request
             req_id  ||= get_line(client)
@@ -43,9 +45,10 @@ class Server
             params = parse(cmd)
             status = :unknown
 
-            # save req_id & client
-            params[:req_id] = req_id
-            params[:client] = client
+            # save params info
+            params[:req_id]  = req_id
+            params[:client]  = client
+            params[:session] = session
 
             # handle response
             begin
@@ -63,9 +66,6 @@ class Server
 
                     # send short dir info
                     send_info(params, :sdir, short_dir(dir))
-
-                    # send file list info
-                    send_info(params, :ls, `ls`.split("\n").join("\0"))
 
                     status = :ok
                 elsif !params[:no_output]
@@ -89,6 +89,9 @@ class Server
                 send_line client, e.to_s.force_encoding(Encoding.default_external)
                 status = :error
             ensure
+                # send file list info
+                send_file_list_info(params)
+
                 # close response send
                 close_send(params)
 
@@ -137,6 +140,16 @@ private
         send_line params[:client], "#{key.to_s}:#{value.to_s}"
     end
 
+    def send_file_list_info(params)
+        session = params[:session]
+        ls      = get_file_list_info()
+
+        if ls != session[:prev_ls]
+            send_info(params, :ls, ls)
+            session[:prev_ls] = ls
+        end
+    end
+
     def close_send(params)
         return if params[:closed]
         params[:closed] = true
@@ -164,6 +177,10 @@ private
         ap params
 
         return params
+    end
+
+    def get_file_list_info()
+        Dir["*"].join("\0")
     end
 end
 
