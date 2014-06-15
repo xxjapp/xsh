@@ -80,9 +80,11 @@ private
         return nil if line.nil?
 
         # restore lines from Readline to its correct encoding 'Encoding.default_external'
-        corrent_line = line.clone.force_encoding(Encoding.default_external)
+        # and remove leading and trailing whitespace
+        corrent_line = line.clone.force_encoding(Encoding.default_external).strip
 
-        if corrent_line =~ /^\s*$/ or Readline::HISTORY.to_a[-2] == line
+        if corrent_line.empty? or corrent_line == Readline::HISTORY.to_a[-2].to_s.clone.force_encoding(Encoding.default_external).strip
+            # remove it from histroy
             Readline::HISTORY.pop
         else
             # write to histroy
