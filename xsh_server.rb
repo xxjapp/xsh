@@ -35,6 +35,12 @@ class Server
             req_id  ||= get_line(client)
             request ||= get_line(client)
 
+            if !req_id
+                # user may pressed ^C to exit
+                puts "#{client}: exit by ^C"
+                return
+            end
+
             # log request
             puts "/--------------------------------------------------------------"
             puts "client  : #{client}"
@@ -119,8 +125,8 @@ private
     end
 
     def get_line(client)
-        line = client.gets.chomp
-        line.force_encoding('UTF-8')
+        line = client.gets
+        line == nil ? nil : line.chomp.force_encoding('UTF-8')
     end
 
     def send_line(client, line)
