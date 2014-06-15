@@ -50,7 +50,7 @@ class Client
         begin
             process_thread.join
         rescue Interrupt => e
-            puts
+            puts '^C'
         ensure
             puts "Connection to #{HOST} closed."
         end
