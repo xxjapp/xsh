@@ -16,6 +16,7 @@ INIT = "init"
 class Server
     def initialize(host, port)
         @server = TCPServer.open(host, port)
+        @exes   = CompGen.get.join("\0")
         puts "#{@server} started OK!"
     end
 
@@ -77,7 +78,7 @@ class Server
                         Dir.chdir dir
 
                         send_info(params, :sdir, short_dir(dir))
-                        send_info(params, :exes, get_exes()) if req_id == INIT
+                        send_info(params, :exes, @exes) if req_id == INIT
 
                         session[:curr_dir] = dir
                         session[:prev_dir] = curr_dir
@@ -206,10 +207,6 @@ private
 
     def get_file_list_info()
         Dir["*"].join("\0")
-    end
-
-    def get_exes()
-        CompGen.get.join("\0")
     end
 end
 
