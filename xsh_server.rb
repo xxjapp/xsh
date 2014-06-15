@@ -47,14 +47,16 @@ class Server
             puts "req_id  : #{req_id}"
             puts "request : #{request}"
 
-            cmd    = request.encode(Encoding.default_external)
-            params = parse(cmd)
-            status = :unknown
-
             # save params info
+            params = {}
             params[:req_id]  = req_id
             params[:client]  = client
             params[:session] = session
+
+            cmd    = request.encode(Encoding.default_external)
+            status = :unknown
+
+            parse(params, cmd)
 
             # handle response
             begin
@@ -67,11 +69,17 @@ class Server
                 end
 
                 if params[:cd]
-                    dir = File.expand_path(params[:path])
-                    Dir.chdir dir
+                    curr_dir = session[:curr_dir]
+                    dir      = File.expand_path(params[:dir])
 
-                    # send short dir info
-                    send_info(params, :sdir, short_dir(dir))
+                    if dir != curr_dir
+                        Dir.chdir dir
+
+                        send_info(params, :sdir, short_dir(dir))
+
+                        session[:curr_dir] = dir
+                        session[:prev_dir] = curr_dir
+                    end
 
                     status = :ok
                 elsif !params[:no_output]
@@ -111,6 +119,8 @@ class Server
             end
         }
     rescue => e
+        client.close
+
         puts "Error during processing: #{$!}"
         puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
 
@@ -163,9 +173,8 @@ private
         send_line params[:client], params[:req_id]
     end
 
-    def parse(cmd)
-        params = {}
-        exe    = File.basename(cmd.split[0], ".*").downcase.to_sym
+    def parse(params, cmd)
+        exe = File.basename(cmd.split[0], ".*").downcase.to_sym
 
         case exe
         when :start
@@ -175,14 +184,22 @@ private
             params[:exit]      = true
         when :cd
             params[:cd]        = true
-            params[:path]      = cmd.split[1..-1].join(' ')
-            params[:path]      = '~' if params[:path].empty?    # use linux way
+            params[:dir]       = cmd.split[1..-1].join(' ')
+            handle_cd_dir(params)
         end
 
         print 'params  = '
         ap params
 
         return params
+    end
+
+    def handle_cd_dir(params)
+        if params[:dir] == '-'
+            params[:dir] = params[:session][:prev_dir]
+        end
+
+        params[:dir] = '~' if params[:dir].to_s.empty?    # use linux way
     end
 
     def get_file_list_info()
