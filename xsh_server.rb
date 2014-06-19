@@ -8,7 +8,7 @@ require './compgen'
 
 # SEE: https://github.com/gimite/web-socket-ruby/issues/6
 HOST = '0.0.0.0'
-PORT = '3000'
+PORT = '619'
 
 HOME = File.expand_path('~')
 INIT = "init"
@@ -210,4 +210,6 @@ private
     end
 end
 
-Server.new(HOST, PORT).run
+if __FILE__ == $0
+    Server.new(HOST, PORT).run
+end
