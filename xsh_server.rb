@@ -15,9 +15,17 @@ INIT = "init"
 
 class Server
     def initialize(host, port)
+        redirect_output_to_log_file
+
         @server = TCPServer.open(host, port)
         @exes   = CompGen.get.join("\0")
         puts "#{@server} started OK!"
+    end
+
+    def redirect_output_to_log_file
+        $stdout.reopen("service.log", "w")
+        $stdout.sync = true
+        $stderr.reopen($stdout)
     end
 
     def run()
