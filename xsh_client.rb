@@ -6,7 +6,7 @@ require 'digest/md5'
 require 'readline'
 
 HOST = 'localhost'
-PORT = '619'
+PORT = '620'
 
 XSH_HISTORY = File.expand_path('~/.xsh_history')
 INIT        = "init"
