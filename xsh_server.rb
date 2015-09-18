@@ -23,7 +23,7 @@ class Server
     end
 
     def redirect_output_to_log_file
-        $stdout.reopen("service.log", "w")
+        $stdout.reopen("service.log", "a")
         $stdout.sync = true
         $stderr.reopen($stdout)
     end
