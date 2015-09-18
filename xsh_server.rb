@@ -17,7 +17,13 @@ class Server
     def initialize(host, port)
         redirect_output_to_log_file
 
-        @server = TCPServer.open(host, port)
+        begin
+            @server = TCPServer.open(host, port)
+        rescue Errno::EADDRINUSE
+            puts "xsh server already started."
+            exit
+        end
+
         @exes   = CompGen.get.join("\0")
         puts "#{@server} started OK!"
     end
